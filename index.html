@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F7F8F7">
+<meta name="theme-color" content="#0E1418">
 <title>Budget Tracker</title>
 <style>
 :root{
@@ -250,8 +250,8 @@ async function load(){
   try { if (window.storage) { const r = await window.storage.get(KEY); raw = r && r.value; } } catch(e){}
   if (!raw) { try { raw = localStorage.getItem(KEY); } catch(e){} }
   if (raw){ try { const n = normalise(JSON.parse(raw)); if (n) state = n; } catch(e){} }
-  let t = "light";
-  try { t = localStorage.getItem(THEME_KEY) || "light"; } catch(e){}
+  let t = "dark";
+  try { t = localStorage.getItem(THEME_KEY) || "dark"; } catch(e){}
   setTheme(t);
 }
 let saveTimer;
