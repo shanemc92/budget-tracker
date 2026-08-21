@@ -1,0 +1,143 @@
+{
+  "v": 2,
+  "active": "p-renovation",
+  "projects": [
+    {
+      "id": "p-renovation",
+      "name": "House Renovation",
+      "currency": "\u20ac",
+      "funding": [
+        { "id": "f-loan", "name": "Home improvement loan", "amount": 85000 },
+        { "id": "f-savings", "name": "Savings", "amount": 25000 },
+        { "id": "f-grant", "name": "SEAI grant", "amount": 6000 }
+      ],
+      "sections": [
+        {
+          "id": "s-strip",
+          "name": "Strip out & structure",
+          "open": true,
+          "items": [
+            { "id": "r-skip", "name": "Skip hire & clearance", "budget": 1200, "actual": 1340, "done": true },
+            { "id": "r-demo", "name": "Demolition & soft strip", "budget": 3500, "actual": 3500, "done": true },
+            { "id": "r-rsj", "name": "Steel beam & structural works", "budget": 6500, "actual": 7900, "done": true },
+            { "id": "r-roof", "name": "Roof repairs", "budget": 4000, "actual": 3650, "done": true }
+          ]
+        },
+        {
+          "id": "s-envelope",
+          "name": "Insulation & windows",
+          "open": true,
+          "items": [
+            { "id": "r-cavity", "name": "Cavity wall insulation", "budget": 2800, "actual": 2800, "done": true },
+            { "id": "r-attic", "name": "Attic insulation", "budget": 1400, "actual": 1250, "done": true },
+            { "id": "r-windows", "name": "Windows & external doors", "budget": 14000, "actual": 15200, "done": true },
+            { "id": "r-airtight", "name": "Airtightness membrane & tapes", "budget": 900, "actual": 0, "done": false }
+          ]
+        },
+        {
+          "id": "s-first-fix",
+          "name": "First fix",
+          "open": true,
+          "items": [
+            { "id": "r-elec1", "name": "Electrical rewire", "budget": 8500, "actual": 4200, "done": false },
+            { "id": "r-plumb1", "name": "Plumbing first fix", "budget": 5500, "actual": 2800, "done": false },
+            { "id": "r-heatpump", "name": "Heat pump & cylinder", "budget": 12000, "actual": 0, "done": false },
+            { "id": "r-rads", "name": "Rads & underfloor loops", "budget": 4500, "actual": 0, "done": false }
+          ]
+        },
+        {
+          "id": "s-second-fix",
+          "name": "Second fix & finishes",
+          "open": true,
+          "items": [
+            { "id": "r-plaster", "name": "Slabbing & skimming", "budget": 7000, "actual": 0, "done": false },
+            { "id": "r-kitchen", "name": "Kitchen", "budget": 13000, "actual": 2000, "done": false },
+            { "id": "r-bath", "name": "Bathrooms", "budget": 9000, "actual": 0, "done": false },
+            { "id": "r-floors", "name": "Flooring", "budget": 5000, "actual": 0, "done": false },
+            { "id": "r-doors", "name": "Internal doors & joinery", "budget": 3800, "actual": 0, "done": false },
+            { "id": "r-paint", "name": "Painting & decorating", "budget": 2500, "actual": 0, "done": false }
+          ]
+        },
+        {
+          "id": "s-reno-extras",
+          "name": "Outside & contingency",
+          "open": false,
+          "items": [
+            { "id": "r-drive", "name": "Driveway resurfacing", "budget": 4500, "actual": 0, "done": false },
+            { "id": "r-garden", "name": "Garden & patio", "budget": 3000, "actual": 0, "done": false },
+            { "id": "r-contingency", "name": "Contingency", "budget": 6000, "actual": 0, "done": false }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p-wedding",
+      "name": "Wedding",
+      "currency": "\u20ac",
+      "funding": [
+        { "id": "w-savings", "name": "Joint savings", "amount": 30000 },
+        { "id": "w-family", "name": "Family contribution", "amount": 12000 }
+      ],
+      "sections": [
+        {
+          "id": "s-venue",
+          "name": "Venue & catering",
+          "open": true,
+          "items": [
+            { "id": "w-deposit", "name": "Venue deposit", "budget": 3000, "actual": 3000, "done": true },
+            { "id": "w-meal", "name": "Wedding breakfast (110 guests)", "budget": 9900, "actual": 0, "done": false },
+            { "id": "w-drinks", "name": "Drinks reception & wine", "budget": 3200, "actual": 0, "done": false },
+            { "id": "w-evening", "name": "Evening food", "budget": 1100, "actual": 0, "done": false },
+            { "id": "w-corkage", "name": "Corkage & service", "budget": 800, "actual": 0, "done": false }
+          ]
+        },
+        {
+          "id": "s-attire",
+          "name": "Attire & beauty",
+          "open": true,
+          "items": [
+            { "id": "w-dress", "name": "Dress & alterations", "budget": 2500, "actual": 2750, "done": true },
+            { "id": "w-suit", "name": "Suits", "budget": 900, "actual": 850, "done": true },
+            { "id": "w-rings", "name": "Rings", "budget": 2200, "actual": 2200, "done": true },
+            { "id": "w-hair", "name": "Hair & makeup", "budget": 650, "actual": 200, "done": false }
+          ]
+        },
+        {
+          "id": "s-suppliers",
+          "name": "Suppliers",
+          "open": true,
+          "items": [
+            { "id": "w-photo", "name": "Photographer", "budget": 2400, "actual": 600, "done": false },
+            { "id": "w-video", "name": "Videographer", "budget": 1800, "actual": 500, "done": false },
+            { "id": "w-band", "name": "Band", "budget": 1900, "actual": 400, "done": false },
+            { "id": "w-dj", "name": "DJ", "budget": 500, "actual": 0, "done": false },
+            { "id": "w-flowers", "name": "Flowers", "budget": 1400, "actual": 300, "done": false },
+            { "id": "w-cake", "name": "Cake", "budget": 450, "actual": 0, "done": false },
+            { "id": "w-car", "name": "Transport", "budget": 600, "actual": 0, "done": false }
+          ]
+        },
+        {
+          "id": "s-admin",
+          "name": "Paper & admin",
+          "open": true,
+          "items": [
+            { "id": "w-invites", "name": "Invitations & stationery", "budget": 500, "actual": 480, "done": true },
+            { "id": "w-registry", "name": "Registry office & notice fees", "budget": 350, "actual": 350, "done": true },
+            { "id": "w-favours", "name": "Favours & decor", "budget": 700, "actual": 150, "done": false },
+            { "id": "w-insurance", "name": "Wedding insurance", "budget": 120, "actual": 120, "done": true }
+          ]
+        },
+        {
+          "id": "s-honeymoon",
+          "name": "Honeymoon",
+          "open": false,
+          "items": [
+            { "id": "w-flights", "name": "Flights", "budget": 1600, "actual": 1600, "done": true },
+            { "id": "w-hotel", "name": "Accommodation", "budget": 2800, "actual": 900, "done": false },
+            { "id": "w-spending", "name": "Spending money", "budget": 1500, "actual": 0, "done": false }
+          ]
+        }
+      ]
+    }
+  ]
+}

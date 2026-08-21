@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F8F7">
+<title>Budget Tracker</title>
+<style>
+:root{
+  --bg:#F7F8F7; --panel:#FFFFFF; --panel-2:#EDEFEE; --line:#DDE1DF;
+  --ink:#1B2422; --muted:#5E6B67; --dim:#93A09C;
+  --spent:#2E7D8C; --budget:#C98A2E; --over:#B4432C; --ok:#4C8B47;
+  --shadow:0 1px 2px rgba(27,36,34,.06);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px;
+}
+:root[data-theme="dark"]{
+  --bg:#0E1418; --panel:#161E24; --panel-2:#1C262D; --line:#243138;
+  --ink:#E6ECEF; --muted:#7E939E; --dim:#54666F;
+  --spent:#5FA8B8; --budget:#E0A458; --over:#C8553D; --ok:#7FB069;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{padding:14px 12px calc(28px + env(safe-area-inset-bottom));max-width:760px;margin:0 auto;font-size:15px;line-height:1.45}
+h1,h2,h3{margin:0;font-weight:600}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--spent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+/* ---- project bar ---- */
+.projbar{display:flex;align-items:center;gap:6px;margin-bottom:14px}
+#proj{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:10px 30px 10px 12px;font-size:17px;font-weight:600;letter-spacing:-.01em;
+  appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.icon{width:38px;height:40px;flex:none;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+  box-shadow:var(--shadow);color:var(--muted);font-size:15px;display:grid;place-items:center}
+.icon:hover{color:var(--ink);border-color:var(--spent)}
+
+/* ---- funding tape ---- */
+.tape{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 10px;box-shadow:var(--shadow)}
+.tape-top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:10px}
+.tape-big{font-family:var(--mono);font-size:26px;letter-spacing:-.02em;line-height:1}
+.tape-big.neg{color:var(--over)}
+.tape-bar{position:relative;height:26px;border-radius:4px;overflow:hidden;background:var(--panel-2);display:flex}
+.tape-bar span{display:block;height:100%}
+.seg-spent{background:var(--spent)}
+.seg-left{background:var(--budget);opacity:.5}
+.seg-over{background:var(--over)}
+.ticks{position:absolute;inset:0;display:flex;pointer-events:none}
+.ticks i{flex:1;border-right:1px solid var(--bg);opacity:.45}
+.ticks i:last-child{border:0}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:9px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.dot{width:9px;height:9px;border-radius:2px;flex:none}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
+.stat b{display:block;font-family:var(--mono);font-size:15px;font-weight:600;margin-top:3px;letter-spacing:-.01em}
+.stat b.over{color:var(--over)} .stat b.ok{color:var(--ok)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:14px;box-shadow:var(--shadow)}
+.card > .eyebrow{margin-bottom:12px}
+.empty p{margin:0 0 8px;font-size:13.5px;color:var(--muted);max-width:46ch}
+.empty p:last-child{margin-bottom:0}
+.empty b{color:var(--ink);font-weight:600}
+
+/* ---- charts ---- */
+.chart-row{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.chart-row .lbl{width:88px;flex:none;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{flex:1;height:16px;background:var(--panel-2);border-radius:3px;position:relative;overflow:hidden}
+.track .plan{position:absolute;inset:0 auto 0 0;background:var(--budget);opacity:.3}
+.track .act{position:absolute;inset:0 auto 0 0;background:var(--spent)}
+.track .act.over{background:var(--over)}
+.chart-row .val{width:64px;flex:none;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut{flex:none}
+.dlegend{flex:1;min-width:150px;display:grid;gap:5px}
+.dlegend div{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.dlegend em{margin-left:auto;font-family:var(--mono);font-style:normal;color:var(--ink)}
+
+/* ---- stages ---- */
+.section{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-top:12px;overflow:hidden;box-shadow:var(--shadow)}
+.shead{display:flex;align-items:center;gap:10px;padding:12px 13px;background:var(--panel-2)}
+.shead .caret{font-family:var(--mono);color:var(--dim);font-size:12px;width:12px;flex:none}
+.sname{flex:1;background:none;border:none;font-weight:600;font-size:14.5px;padding:0;min-width:0}
+.sname:focus{outline:none;box-shadow:0 1px 0 var(--spent)}
+.stotal{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;flex:none}
+.stotal u{display:block;text-decoration:none;color:var(--dim);font-size:10.5px}
+.sbar{height:3px;background:var(--panel-2)}
+.sbar span{display:block;height:100%;background:var(--spent)}
+.sbar span.over{background:var(--over)}
+
+.item{display:grid;grid-template-columns:22px 1fr auto;gap:9px;align-items:center;padding:10px 13px;border-top:1px solid var(--line)}
+.item.done .iname{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+.chk{width:20px;height:20px;border:1.5px solid var(--dim);border-radius:5px;flex:none;display:grid;place-items:center;
+  color:var(--panel);font-size:12px;line-height:1;padding:0}
+.chk[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.iname{background:none;border:none;padding:2px 0;width:100%;font-size:14px;min-width:0}
+.iname:focus{outline:none;box-shadow:0 1px 0 var(--spent)}
+.amts{display:flex;gap:6px;align-items:center;flex:none}
+.amt{width:74px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 7px;
+  font-family:var(--mono);font-size:12.5px;text-align:right}
+.amt:focus{outline:none;border-color:var(--spent)}
+.amt.plan{color:var(--budget)}
+.amt.act{color:var(--spent)}
+.amt.act.over{color:var(--over);border-color:var(--over)}
+.del{color:var(--dim);font-size:17px;padding:0 2px;line-height:1}
+.del:hover{color:var(--over)}
+.amt-heads{display:grid;grid-template-columns:22px 1fr auto;gap:9px;padding:7px 13px 3px}
+.amt-heads .amts span{width:74px;text-align:right}
+.amt-heads .del-sp{width:15px}
+.add{width:100%;text-align:left;padding:10px 13px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;font-family:var(--mono)}
+.add:hover{color:var(--spent)}
+
+.fund{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.fund input[type=text]{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:13.5px;min-width:0}
+.fund input[type=text]:focus{outline:none;border-color:var(--spent)}
+.fund .amt{width:96px}
+.cur{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.cur input{width:56px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;text-align:center;font-family:var(--mono)}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tools button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:9px 13px;
+  font-size:12.5px;font-family:var(--mono);color:var(--muted);box-shadow:var(--shadow)}
+.tools button:hover{color:var(--ink);border-color:var(--spent)}
+.tools .danger:hover{color:var(--over);border-color:var(--over)}
+footer{margin-top:20px;font-size:11px;color:var(--dim);font-family:var(--mono);text-align:center}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);
+  padding:9px 15px;border-radius:8px;font-size:13px;opacity:0;transition:.22s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:400px){
+  .amt{width:66px} .amt-heads .amts span{width:66px} .chart-row .lbl{width:74px}
+}
+</style>
+</head>
+<body>
+
+<div class="projbar">
+  <select id="proj" aria-label="Project"></select>
+  <button class="icon" id="rename" title="Rename project" aria-label="Rename project">✎</button>
+  <button class="icon" id="newProj" title="New project" aria-label="New project">+</button>
+  <button class="icon" id="theme" title="Switch theme" aria-label="Switch theme">☾</button>
+</div>
+
+<div class="tape">
+  <div class="tape-top">
+    <div>
+      <div class="eyebrow">Funds left after forecast</div>
+      <div class="tape-big mono" id="headroom">—</div>
+    </div>
+    <div style="text-align:right">
+      <div class="eyebrow">Funding</div>
+      <div class="mono" id="fundTotal" style="font-size:14px;color:var(--muted)">—</div>
+    </div>
+  </div>
+  <div class="tape-bar" id="tapeBar"></div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--spent)"></i>Spent <b class="mono" id="lgSpent"></b></span>
+    <span><i class="dot" style="background:var(--budget);opacity:.5"></i>Still to pay <b class="mono" id="lgLeft"></b></span>
+    <span><i class="dot" style="background:var(--panel-2)"></i>Unallocated <b class="mono" id="lgFree"></b></span>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="eyebrow">Budget</span><b id="sBudget">—</b></div>
+  <div class="stat"><span class="eyebrow">Spent</span><b id="sSpent">—</b></div>
+  <div class="stat"><span class="eyebrow">Variance</span><b id="sVar">—</b></div>
+</div>
+
+<section class="card">
+  <div class="eyebrow">Budget vs spent by stage</div>
+  <div id="barChart"></div>
+</section>
+
+<section class="card">
+  <div class="eyebrow">Where the money goes</div>
+  <div class="donut-wrap">
+    <svg class="donut" id="donut" width="140" height="140" viewBox="0 0 140 140" aria-label="Spend split by stage"></svg>
+    <div class="dlegend" id="donutLegend"></div>
+  </div>
+</section>
+
+<main id="sections"></main>
+
+<section class="card">
+  <div class="eyebrow">Funding</div>
+  <div id="funding"></div>
+  <button class="add" style="margin-top:4px" id="addFund">+ add funding source</button>
+  <div class="cur"><label for="curInput">Currency symbol</label><input id="curInput" maxlength="3" aria-label="Currency symbol"></div>
+</section>
+
+<div class="tools">
+  <button id="addSection">+ stage</button>
+  <button id="export">export json</button>
+  <button id="import">import json</button>
+  <button id="csv">export csv</button>
+  <button id="delProj" class="danger">delete project</button>
+</div>
+
+<footer>Saved on this device. Export a copy before clearing your browser.</footer>
+<div class="toast" id="toast"></div>
+<input type="file" id="file" accept=".json,application/json" hidden>
+
+<script>
+"use strict";
+const KEY = "budget-tracker", THEME_KEY = "budget-tracker-theme";
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const PALETTE = ["#2E7D8C","#C98A2E","#4C8B47","#8A5FA0","#B4432C","#3F6E8A","#A88B3C","#6E7C86"];
+const num = v => Number(v) || 0;
+
+/* ---------- theme ---------- */
+function setTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("#theme").textContent = t === "dark" ? "☀" : "☾";
+  document.querySelector('meta[name=theme-color]').content = t === "dark" ? "#0E1418" : "#F7F8F7";
+  try { localStorage.setItem(THEME_KEY, t); } catch(e){}
+}
+$("#theme").onclick = () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+
+/* ---------- state ---------- */
+const newProject = name => ({ id: uid(), name: name || "New project", currency: "€", funding: [], sections: [] });
+function blank(){ const p = newProject("My project"); return { v: 2, active: p.id, projects: [p] }; }
+let state = blank();
+const P = () => state.projects.find(p => p.id === state.active) || state.projects[0];
+
+function normalise(data){
+  if (!data || typeof data !== "object") return null;
+  if (Array.isArray(data.projects) && data.projects.length){
+    data.projects.forEach(p => { p.id = p.id || uid(); p.currency = p.currency || "€";
+      p.funding = p.funding || []; p.sections = p.sections || []; });
+    return { v: 2, active: data.active || data.projects[0].id, projects: data.projects };
+  }
+  if (Array.isArray(data.sections)){   // single-project file
+    const p = { id: uid(), name: data.name || data.project || "Imported project",
+      currency: data.currency || "€", funding: data.funding || [], sections: data.sections };
+    return { v: 2, active: p.id, projects: [p] };
+  }
+  return null;
+}
+
+async function load(){
+  let raw = null;
+  try { if (window.storage) { const r = await window.storage.get(KEY); raw = r && r.value; } } catch(e){}
+  if (!raw) { try { raw = localStorage.getItem(KEY); } catch(e){} }
+  if (raw){ try { const n = normalise(JSON.parse(raw)); if (n) state = n; } catch(e){} }
+  let t = "light";
+  try { t = localStorage.getItem(THEME_KEY) || "light"; } catch(e){}
+  setTheme(t);
+}
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const raw = JSON.stringify(state);
+    try { if (window.storage) await window.storage.set(KEY, raw); } catch(e){}
+    try { localStorage.setItem(KEY, raw); } catch(e){}
+  }, 250);
+}
+
+/* ---------- money ---------- */
+const sym = () => (P().currency || "€");
+const money = n => sym() + Math.round(n).toLocaleString("en-IE");
+const moneyK = n => Math.abs(n) >= 10000 ? sym() + (n/1000).toFixed(n % 1000 ? 1 : 0) + "k" : money(n);
+function parseAmt(v){                      // "18k", "1,250", "€18 000"
+  if (v == null) return 0;
+  let s = String(v).trim().toLowerCase().replace(/[^0-9.k-]/g, "");
+  if (!s) return 0;
+  let mult = 1;
+  if (s.endsWith("k")) { mult = 1000; s = s.slice(0, -1); }
+  const n = parseFloat(s);
+  return isFinite(n) ? Math.round(n * mult) : 0;
+}
+
+/* ---------- totals ---------- */
+function totals(){
+  const p = P();
+  let budget = 0, actual = 0, forecast = 0;
+  const stages = p.sections.map(s => {
+    let b = 0, a = 0, f = 0;
+    s.items.forEach(i => {
+      const ib = num(i.budget), ia = num(i.actual);
+      b += ib; a += ia; f += i.done ? ia : Math.max(ib, ia);
+    });
+    budget += b; actual += a; forecast += f;
+    return { id: s.id, name: s.name, budget: b, actual: a, forecast: f };
+  });
+  const funds = p.funding.reduce((t, f) => t + num(f.amount), 0);
+  return { stages, budget, actual, forecast, funds,
+    toPay: Math.max(0, forecast - actual), headroom: funds - forecast };
+}
+
+/* ---------- render ---------- */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+function render(){
+  const p = P(), t = totals();
+  state.active = p.id;
+
+  $("#proj").innerHTML = state.projects.map(x =>
+    `<option value="${x.id}"${x.id === p.id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
+  $("#curInput").value = p.currency || "€";
+
+  const hd = $("#headroom");
+  hd.textContent = (t.headroom < 0 ? "-" : "") + money(Math.abs(t.headroom));
+  hd.classList.toggle("neg", t.headroom < 0);
+  $("#fundTotal").textContent = money(t.funds);
+
+  const scale = Math.max(t.funds, t.forecast, 1);
+  const pc = v => (v / scale * 100).toFixed(2) + "%";
+  const over = Math.max(0, t.forecast - t.funds);
+  $("#tapeBar").innerHTML =
+    `<span class="seg-spent" style="width:${pc(t.actual)}"></span>` +
+    `<span class="seg-left" style="width:${pc(Math.max(0, Math.min(t.toPay, t.funds - t.actual)))}"></span>` +
+    (over > 0 ? `<span class="seg-over" style="width:${pc(over)}"></span>` : "") +
+    `<div class="ticks">${"<i></i>".repeat(10)}</div>`;
+  $("#lgSpent").textContent = moneyK(t.actual);
+  $("#lgLeft").textContent = moneyK(t.toPay);
+  $("#lgFree").textContent = moneyK(Math.max(0, t.funds - t.forecast));
+
+  $("#sBudget").textContent = money(t.budget);
+  $("#sSpent").textContent = money(t.actual);
+  const v = t.budget - t.forecast, sv = $("#sVar");
+  sv.textContent = (v < 0 ? "+" : "") + money(Math.abs(v)) + (v < 0 ? " over" : " under");
+  sv.className = v < 0 ? "over" : "ok";
+
+  renderBars(t); renderDonut(t); renderSections(t); renderFunding();
+  save();
+}
+
+function renderBars(t){
+  const max = Math.max(1, ...t.stages.map(s => Math.max(s.budget, s.actual)));
+  $("#barChart").innerHTML = t.stages.map(s => `
+    <div class="chart-row">
+      <div class="lbl">${esc(s.name)}</div>
+      <div class="track">
+        <div class="plan" style="width:${(s.budget/max*100).toFixed(1)}%"></div>
+        <div class="act${s.actual > s.budget ? " over" : ""}" style="width:${(s.actual/max*100).toFixed(1)}%"></div>
+      </div>
+      <div class="val">${moneyK(s.actual)}<span style="color:var(--dim)">/${moneyK(s.budget)}</span></div>
+    </div>`).join("") || `<div style="color:var(--dim);font-size:13px">Add a stage and this chart fills in.</div>`;
+}
+
+function renderDonut(t){
+  const data = t.stages.map((s, i) => ({ name: s.name, val: s.actual || 0, c: PALETTE[i % PALETTE.length] }))
+                       .filter(d => d.val > 0);
+  const sum = data.reduce((a, d) => a + d.val, 0);
+  const R = 55, C = 2 * Math.PI * R;
+  const svg = $("#donut");
+  if (!sum){
+    svg.innerHTML = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--panel-2)" stroke-width="20"/>
+      <text x="70" y="75" text-anchor="middle" fill="var(--dim)" font-size="11" font-family="ui-monospace,monospace">no spend yet</text>`;
+    $("#donutLegend").innerHTML = `<div style="color:var(--dim)">Fill in the spent column and this fills up.</div>`;
+    return;
+  }
+  let off = 0;
+  svg.innerHTML = `<g transform="rotate(-90 70 70)">` + data.map(d => {
+    const len = d.val / sum * C;
+    const seg = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${d.c}" stroke-width="20"
+      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"/>`;
+    off += len; return seg;
+  }).join("") + `</g>
+    <text x="70" y="67" text-anchor="middle" fill="var(--ink)" font-size="15" font-family="ui-monospace,monospace">${moneyK(sum)}</text>
+    <text x="70" y="82" text-anchor="middle" fill="var(--dim)" font-size="9.5" font-family="ui-monospace,monospace" letter-spacing="1.5">SPENT</text>`;
+  $("#donutLegend").innerHTML = data.map(d =>
+    `<div><i class="dot" style="background:${d.c}"></i>${esc(d.name)}<em>${(d.val/sum*100).toFixed(0)}%</em></div>`).join("");
+}
+
+function renderSections(t){
+  const p = P();
+  if (!p.sections.length){
+    $("#sections").innerHTML = `<div class="card empty">
+      <div class="eyebrow">No stages yet</div>
+      <p>Add a stage for each phase of the project, then add the items you're paying for inside it.</p>
+      <p>Already have an export? Use <b>import json</b> below.</p></div>`;
+    return;
+  }
+  const map = Object.fromEntries(t.stages.map(s => [s.id, s]));
+  $("#sections").innerHTML = p.sections.map(s => {
+    const st = map[s.id], isOver = st.actual > st.budget && st.budget > 0;
+    const pctW = st.budget ? Math.min(100, st.actual / st.budget * 100) : (st.actual ? 100 : 0);
+    const body = !s.open ? "" : `
+      <div class="amt-heads"><span></span><span class="eyebrow" style="align-self:end">Item</span>
+        <div class="amts"><span class="eyebrow">Budget</span><span class="eyebrow">Spent</span><span class="del-sp"></span></div></div>
+      ${s.items.map(i => `
+        <div class="item${i.done ? " done" : ""}" data-i="${i.id}" data-s="${s.id}">
+          <button class="chk" data-act="done" aria-pressed="${!!i.done}" aria-label="Mark done">${i.done ? "✓" : ""}</button>
+          <input class="iname" data-act="iname" value="${esc(i.name)}" aria-label="Item name">
+          <div class="amts">
+            <input class="amt plan mono" data-act="budget" inputmode="decimal" value="${i.budget ? num(i.budget).toLocaleString("en-IE") : ""}" placeholder="—" aria-label="Budget">
+            <input class="amt act mono${num(i.actual) > num(i.budget) && num(i.budget) ? " over" : ""}" data-act="actual" inputmode="decimal" value="${i.actual ? num(i.actual).toLocaleString("en-IE") : ""}" placeholder="—" aria-label="Spent">
+            <button class="del" data-act="delItem" aria-label="Delete item">×</button>
+          </div>
+        </div>`).join("")}
+      <button class="add" data-act="addItem" data-s="${s.id}">+ add item</button>`;
+    return `<div class="section" data-s="${s.id}">
+      <div class="shead">
+        <button class="caret" data-act="toggle" aria-label="Collapse stage">${s.open ? "▾" : "▸"}</button>
+        <input class="sname" data-act="sname" value="${esc(s.name)}" aria-label="Stage name">
+        <div class="stotal">${moneyK(st.actual)} / ${moneyK(st.budget)}<u>${isOver ? "over by " + moneyK(st.actual - st.budget) : st.budget ? Math.round(st.actual / st.budget * 100) + "% used" : "no budget"}</u></div>
+        <button class="del" data-act="delSection" aria-label="Delete stage">×</button>
+      </div>
+      <div class="sbar"><span class="${isOver ? "over" : ""}" style="width:${pctW}%"></span></div>
+      ${body}</div>`;
+  }).join("");
+}
+
+function renderFunding(){
+  const f = P().funding;
+  $("#funding").innerHTML = !f.length
+    ? `<div style="color:var(--dim);font-size:13px">Add whatever is paying for this — a loan, savings, a client budget.</div>`
+    : f.map(x => `<div class="fund" data-f="${x.id}">
+        <input type="text" data-act="fname" value="${esc(x.name)}" aria-label="Source">
+        <input class="amt mono" data-act="famount" inputmode="decimal" value="${x.amount ? num(x.amount).toLocaleString("en-IE") : ""}" placeholder="0" aria-label="Amount">
+        <button class="del" data-act="delFund" aria-label="Delete source">×</button></div>`).join("");
+}
+
+/* ---------- lookups ---------- */
+const findSection = id => P().sections.find(s => s.id === id);
+const findItem = (sid, iid) => { const s = findSection(sid); return s && s.items.find(i => i.id === iid); };
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn || btn.tagName === "INPUT") return;
+  const act = btn.dataset.act, p = P();
+  const sec = e.target.closest(".section"), row = e.target.closest(".item"), fund = e.target.closest(".fund");
+
+  if (act === "toggle"){ const s = findSection(sec.dataset.s); s.open = !s.open; render(); }
+  else if (act === "delSection"){ const s = findSection(sec.dataset.s);
+    if (confirm(`Delete "${s.name}" and its ${s.items.length} items?`)){
+      p.sections = p.sections.filter(x => x.id !== s.id); render(); } }
+  else if (act === "addItem"){
+    findSection(btn.dataset.s).items.push({ id: uid(), name: "New item", budget: 0, actual: 0, done: false });
+    render();
+    const inputs = document.querySelectorAll(`.section[data-s="${btn.dataset.s}"] .iname`);
+    const last = inputs[inputs.length - 1]; if (last){ last.focus(); last.select(); } }
+  else if (act === "delItem"){ const s = findSection(row.dataset.s);
+    s.items = s.items.filter(i => i.id !== row.dataset.i); render(); }
+  else if (act === "done"){ const i = findItem(row.dataset.s, row.dataset.i); i.done = !i.done; render(); }
+  else if (act === "delFund"){ p.funding = p.funding.filter(f => f.id !== fund.dataset.f); render(); }
+});
+
+document.addEventListener("change", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.act) return;
+  const act = el.dataset.act, row = el.closest(".item"), sec = el.closest(".section"), fund = el.closest(".fund");
+  if (act === "iname"){ findItem(row.dataset.s, row.dataset.i).name = el.value.trim() || "Untitled"; render(); }
+  else if (act === "budget" || act === "actual"){ findItem(row.dataset.s, row.dataset.i)[act] = parseAmt(el.value); render(); }
+  else if (act === "sname"){ findSection(sec.dataset.s).name = el.value.trim() || "Untitled stage"; render(); }
+  else if (act === "fname"){ P().funding.find(f => f.id === fund.dataset.f).name = el.value.trim() || "Source"; render(); }
+  else if (act === "famount"){ P().funding.find(f => f.id === fund.dataset.f).amount = parseAmt(el.value); render(); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.tagName === "INPUT") e.target.blur(); });
+
+/* ---------- projects ---------- */
+$("#proj").onchange = e => { state.active = e.target.value; render(); };
+$("#newProj").onclick = () => {
+  const name = prompt("Name this project");
+  if (name === null) return;
+  const p = newProject(name.trim());
+  state.projects.push(p); state.active = p.id; render();
+};
+$("#rename").onclick = () => {
+  const p = P(), name = prompt("Rename project", p.name);
+  if (name === null) return;
+  p.name = name.trim() || p.name; render();
+};
+$("#delProj").onclick = () => {
+  const p = P();
+  if (!confirm(`Delete "${p.name}" and everything in it?`)) return;
+  state.projects = state.projects.filter(x => x.id !== p.id);
+  if (!state.projects.length) state = blank();
+  state.active = state.projects[0].id;
+  render(); toast("Project deleted");
+};
+$("#curInput").onchange = e => { P().currency = e.target.value.trim() || "€"; render(); };
+$("#addSection").onclick = () => { P().sections.push({ id: uid(), name: "New stage", open: true, items: [] }); render(); };
+$("#addFund").onclick = () => { P().funding.push({ id: uid(), name: "New source", amount: 0 }); render(); };
+
+/* ---------- import / export ---------- */
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "budget";
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+$("#export").onclick = () => download(`budget-${stamp()}.json`, JSON.stringify(state, null, 2), "application/json");
+$("#csv").onclick = () => {
+  const p = P(), t = totals();
+  const rows = [["Project", p.name], [], ["Stage","Item","Budget","Spent","Variance","Done"]];
+  p.sections.forEach(s => s.items.forEach(i =>
+    rows.push([s.name, i.name, num(i.budget), num(i.actual), num(i.budget) - num(i.actual), i.done ? "yes" : "no"])));
+  rows.push([], ["TOTAL","", t.budget, t.actual, t.budget - t.actual, ""],
+    ["FUNDING","", t.funds,"","",""], ["FORECAST","", t.forecast,"","",""], ["HEADROOM","", t.headroom,"","",""]);
+  const csv = rows.map(r => r.map(c => `"${String(c == null ? "" : c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  download(`${slug(p.name)}-${stamp()}.csv`, csv, "text/csv");
+};
+$("#import").onclick = () => $("#file").click();
+$("#file").onchange = e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const n = normalise(safeParse(r.result));
+    if (!n) return toast("That file isn't a budget export");
+    const add = state.projects.length && confirm("OK adds these as extra projects. Cancel replaces everything.");
+    if (add){
+      const ids = new Set(state.projects.map(x => x.id));
+      n.projects.forEach(x => { if (ids.has(x.id)) x.id = uid(); state.projects.push(x); });
+      state.active = n.projects[0].id;
+    } else state = n;
+    render(); toast(`Imported ${n.projects.length} project${n.projects.length > 1 ? "s" : ""}`);
+  };
+  r.readAsText(f);
+};
+function safeParse(s){ try { return JSON.parse(s); } catch { return null; } }
+function download(name, text, type){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  toast("Saved " + name);
+}
+let tt;
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(tt); tt = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+load().then(render);
+</script>
+</body>
+</html>
