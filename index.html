@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Self-contained: every script and style is inline and the only URLs the page
+     makes are blob: ones for downloads. frame-ancestors is deliberately absent -
+     browsers ignore it in a meta CSP; it belongs in a response header. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="theme-color" content="#0E1418">
 <title>Budget Tracker</title>
 <style>
